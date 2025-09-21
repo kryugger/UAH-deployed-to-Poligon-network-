@@ -1,0 +1,15 @@
+.env
+# Hardhat artifacts and cache
+artifacts/
+cache/
+node_modules/
+
+# Typechain output
+typechain-types/
+
+# Node modules
+node_modules/
+
+# OS-specific
+.DS_Store
+Thumbs.db
