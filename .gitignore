@@ -13,3 +13,24 @@ node_modules/
 # OS-specific
 .DS_Store
 Thumbs.db
+# Бинарные файлы
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.jfif
+*.rar
+*.zip
+
+# Временные файлы
+trash/
+*.tmp
+*.bak
+
+# Скомпилированные контракты
+Flattened*.sol
+
+# Дубликаты readme
+*readme*
+*Readme*
+
