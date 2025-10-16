@@ -10,6 +10,10 @@ contract DAO is Governor, GovernorTimelockControl {
     ERC20Votes public token;
     DonorBadge public badge;
 
+    mapping(uint256 => ProposalVote) private _proposalVotes;
+    mapping(uint256 => mapping(address => VoterProfile)) public voterMetadata;
+    mapping(address => VoterProfile) public purchaseMetadata;
+
     struct ProposalVote {
         uint256 againstVotes;
         uint256 forVotes;
@@ -22,10 +26,11 @@ contract DAO is Governor, GovernorTimelockControl {
         string ageGroup;
         string ideology;
         string religion;
+        string educationLevel;
+        string incomeBracket;
+        string politicalAffiliation;
+        bool isDonor;
     }
-
-    mapping(uint256 => ProposalVote) private _proposalVotes;
-    mapping(uint256 => mapping(address => VoterProfile)) public voterMetadata;
 
     event MetadataSubmitted(
         uint256 indexed proposalId,
@@ -33,6 +38,20 @@ contract DAO is Governor, GovernorTimelockControl {
         string country,
         string gender,
         string ageGroup,
+        string ideology,
+        string religion,
+        string educationLevel,
+        string incomeBracket,
+        string politicalAffiliation,
+        bool isDonor
+    );
+
+    event VoteCounted(
+        uint256 indexed proposalId,
+        address indexed voter,
+        uint8 support,
+        uint256 weight,
+        string country,
         string ideology,
         string religion
     );
@@ -51,27 +70,90 @@ contract DAO is Governor, GovernorTimelockControl {
         string memory gender,
         string memory ageGroup,
         string memory ideology,
-        string memory religion
+        string memory religion,
+        string memory educationLevel,
+        string memory incomeBracket,
+        string memory politicalAffiliation,
+        bool isDonor
     ) external {
-        voterMetadata[proposalId][msg.sender] = VoterProfile(
-            country,
-            gender,
-            ageGroup,
-            ideology,
-            religion
-        );
+        VoterProfile memory profile = VoterProfile({
+            country: country,
+            gender: gender,
+            ageGroup: ageGroup,
+            ideology: ideology,
+            religion: religion,
+            educationLevel: educationLevel,
+            incomeBracket: incomeBracket,
+            politicalAffiliation: politicalAffiliation,
+            isDonor: isDonor
+        });
 
-        badge.mint(msg.sender);
+        voterMetadata[proposalId][msg.sender] = profile;
+
+        if (isDonor) {
+            badge.mint(msg.sender);
+        }
 
         emit MetadataSubmitted(
             proposalId,
             msg.sender,
-            country,
-            gender,
-            ageGroup,
-            ideology,
-            religion
+            profile.country,
+            profile.gender,
+            profile.ageGroup,
+            profile.ideology,
+            profile.religion,
+            profile.educationLevel,
+            profile.incomeBracket,
+            profile.politicalAffiliation,
+            profile.isDonor
         );
+    }
+
+    function submitPurchaseMetadata(
+        string memory country,
+        string memory gender,
+        string memory ageGroup,
+        string memory ideology,
+        string memory religion,
+        string memory educationLevel,
+        string memory incomeBracket,
+        string memory politicalAffiliation,
+        bool isDonor
+    ) external {
+        VoterProfile memory profile = VoterProfile({
+            country: country,
+            gender: gender,
+            ageGroup: ageGroup,
+            ideology: ideology,
+            religion: religion,
+            educationLevel: educationLevel,
+            incomeBracket: incomeBracket,
+            politicalAffiliation: politicalAffiliation,
+            isDonor: isDonor
+        });
+
+        purchaseMetadata[msg.sender] = profile;
+
+        if (isDonor) {
+            badge.mint(msg.sender);
+        }
+    }
+
+    function getVoterProfile(uint256 proposalId, address voter)
+        external
+        view
+        returns (VoterProfile memory)
+    {
+        return voterMetadata[proposalId][voter];
+    }
+
+    function hasSubmittedMetadata(uint256 proposalId, address voter)
+        external
+        view
+        returns (bool)
+    {
+        VoterProfile memory profile = voterMetadata[proposalId][voter];
+        return bytes(profile.country).length > 0;
     }
 
     function votingDelay() public pure override returns (uint256) {
@@ -234,5 +316,21 @@ contract DAO is Governor, GovernorTimelockControl {
         } else if (support == 2) {
             votes.abstainVotes += weight;
         }
+
+        VoterProfile memory profile = voterMetadata[proposalId][account];
+
+        if (bytes(profile.country).length == 0) {
+            badge.mint(account);
+        }
+
+        emit VoteCounted(
+            proposalId,
+            account,
+            support,
+            weight,
+            profile.country,
+            profile.ideology,
+            profile.religion
+        );
     }
 }

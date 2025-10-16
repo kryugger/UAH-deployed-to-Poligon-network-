@@ -3,22 +3,40 @@
   "version": "1.0.0",
   "description": "UAH Token project with DAO, Treasury, Campaigns",
   "main": "hardhat.config.cjs",
+  "type": "commonjs",
   "scripts": {
     "compile": "hardhat compile",
     "deploy:token": "node scripts/deploy_token.cjs",
     "deploy:factory": "node scripts/deploy_campaignFactory.cjs",
     "deploy:governance": "node scripts/deploy_governance.cjs",
-    "clean": "rm -rf cache/ artifacts/"
+    "clean": "rm -rf cache/ artifacts/",
+    "switch:v5": "npm install --save-dev ethers@5.8.0 @nomicfoundation/hardhat-toolbox@2.0.0 @nomicfoundation/hardhat-chai-matchers@1.0.6 @nomicfoundation/hardhat-ethers@2.0.0 @nomicfoundation/hardhat-verify@0.5.0 --legacy-peer-deps",
+    "switch:v6": "npm install --save-dev ethers@6.15.0 @nomicfoundation/hardhat-toolbox@6.1.0 @nomicfoundation/hardhat-chai-matchers@2.1.0 @nomicfoundation/hardhat-ethers@3.1.0 @nomicfoundation/hardhat-verify@2.1.0 --legacy-peer-deps"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-ignition": "^0.15.13",
+    "@nomicfoundation/hardhat-ignition-ethers": "^0.15.14",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.0",
+    "@nomicfoundation/ignition-core": "^0.15.13",
+    "@typechain/ethers-v6": "^0.5.0",
     "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.5.2",
+    "chai": "^4.2.0",
     "dotenv": "^16.3.1",
     "ethers": "^6.15.0",
     "hardhat": "^2.12.7",
-    "typechain": "^8.3.2"
+    "hardhat-gas-reporter": "^2.3.0",
+    "solidity-coverage": "^0.8.1",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.9.2"
   },
-  "type": "commonjs",
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",
     "chart.js": "^4.5.0",

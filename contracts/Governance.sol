@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/governance/Governor.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
@@ -21,22 +21,22 @@ contract Governance is
         GovernorTimelockControl(_timelock)
     {}
 
-    // сколько блоков идёт голосование (пример: 1 неделя)
+    // Период голосования (~1 неделя при 15 секундах блок)
     function votingPeriod() public pure override returns (uint256) {
-        return 45818; // ~1 неделя при 15 сек блоках
+        return 45818;
     }
 
-    // когда начинается голосование после предложения
+    // Задержка перед стартом голосования
     function votingDelay() public pure override returns (uint256) {
-        return 1; // 1 блок
+        return 1;
     }
 
-    // кто может предложить (по умолчанию — любой с токенами)
+    // Минимальное количество токенов для предложения
     function proposalThreshold() public pure override returns (uint256) {
-        return 1000e18; // минимум 1000 UAH токенов
+        return 1000e18;
     }
 
-    // конфликты наследования
+    // Конфликты наследования
     function state(uint256 proposalId)
         public
         view
@@ -65,10 +65,7 @@ contract Governance is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    )
-        internal
-        override(Governor, GovernorTimelockControl)
-    {
+    ) internal override(Governor, GovernorTimelockControl) {
         super._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -77,11 +74,7 @@ contract Governance is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    )
-        internal
-        override(Governor, GovernorTimelockControl)
-        returns (uint256)
-    {
+    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 

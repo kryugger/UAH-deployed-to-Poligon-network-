@@ -1,43 +1,45 @@
-// deploy_token.cjs
-
 const hre = require("hardhat");
+const { ethers } = hre;
 require("dotenv").config();
+const fs = require("fs");
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
-  console.log("🚀 Deploying UAHToken with account:", deployer.address);
+  const [deployer] = await ethers.getSigners();
+  console.log("🚀 Deploying from:", deployer.address);
 
-  const UAHToken = await hre.ethers.getContractFactory("UAHToken");
+  const totalSupply = ethers.parseUnits("24081991", 18);
+  console.log("📤 Deploying UAHToken with args:", [totalSupply, deployer.address]);
 
-  // Эмиссия токена: 24 081 991 UAH (в честь даты независимости Украины)
-  const totalSupply = hre.ethers.parseUnits("24081991", 18);
-
-  // Передаём два аргумента: totalSupply и owner
-  const token = await UAHToken.deploy(totalSupply, deployer.address);
+  // ✅ Используем безопасный способ — getContractFactory
+  const Token = await ethers.getContractFactory("UAHToken");
+  const token = await Token.deploy(totalSupply, deployer.address);
   await token.waitForDeployment();
 
   const tokenAddress = await token.getAddress();
   console.log("✅ UAHToken deployed at:", tokenAddress);
-  console.log("👤 Owner address:", deployer.address);
 
-  // Чтение параметров контракта
-  const feeWallet = await token.feeWallet();
-  const feePercent = await token.feePercent();
-  const burnPercent = await token.burnPercent();
-  const licenseFee = await token.licenseFee();
+  // Сохраняем адрес
+  fs.writeFileSync("UAHToken-address.json", JSON.stringify({ address: tokenAddress }, null, 2));
+  fs.appendFileSync(".env", `UAHTOKEN_ADDRESS=${tokenAddress}\n`);
 
-  console.log("💰 Fee wallet:", feeWallet);
-  console.log("📊 Fee percent:", feePercent.toString(), "basis points");
-  console.log("🔥 Burn percent:", burnPercent.toString(), "basis points");
-  console.log("📄 License fee:", hre.ethers.formatEther(licenseFee), "BNB");
+  // Настройка комиссии
+  await (await token.setFee(50)).wait(); // 0.5%
+  await (await token.setFeeWallet(deployer.address)).wait();
 
   // Баланс владельца
   const balance = await token.balanceOf(deployer.address);
-  console.log("📦 Initial balance:", hre.ethers.formatUnits(balance, 18), "UAH");
+  console.log("📦 Owner balance:", ethers.formatUnits(balance, 18), "UAH");
 
-  // Проверка роли MINTER
-  const hasMinter = await token.hasRole(await token.MINTER_ROLE(), deployer.address);
-  console.log("🔐 MINTER_ROLE assigned:", hasMinter);
+  // Верификация контракта на Polygonscan
+  try {
+    await hre.run("verify:verify", {
+      address: tokenAddress,
+      constructorArguments: [totalSupply, deployer.address]
+    });
+    console.log("🔍 Contract verified on Polygonscan");
+  } catch (err) {
+    console.warn("⚠️ Verification failed:", err.message);
+  }
 }
 
 main().catch((error) => {

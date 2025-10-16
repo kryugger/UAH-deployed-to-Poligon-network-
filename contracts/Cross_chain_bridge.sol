@@ -15,21 +15,28 @@ interface ILayerZeroEndpoint {
     ) external payable;
 }
 
-contract UAHTokenBridge is ERC20, Ownable {
+interface IUAHToken {
+    function burnFrom(address account, uint256 amount) external;
+    function mint(address to, uint256 amount) external;
+}
+
+contract UAHTokenBridge is Ownable {
 
     ILayerZeroEndpoint public lzEndpoint;
+    IUAHToken public token;
 
-    constructor(address _endpoint) ERC20("UAH Token", "UAH") {
+    constructor(address _endpoint, address _token) {
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
+        token = IUAHToken(_token);
     }
 
     function sendToChain(uint16 chainId, bytes calldata destination, uint256 amount) external payable {
-        _burn(msg.sender, amount);
+        token.burnFrom(msg.sender, amount); // вызываем burn у основного токена
         bytes memory payload = abi.encode(msg.sender, amount);
         lzEndpoint.send(chainId, destination, payload, payable(msg.sender), address(0), bytes(""));
     }
 
     function mintFromBridge(address to, uint256 amount) external onlyOwner {
-        _mint(to, amount);
+        token.mint(to, amount); // вызываем mint у основного токена
     }
 }

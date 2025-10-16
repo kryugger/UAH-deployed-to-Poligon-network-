@@ -1,0 +1,32 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/CampaignFactory.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.21;\n\nimport \"./Campaign.sol\";\nimport \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ncontract CampaignFactory {\n    address[] public campaigns;\n\n    function createCampaign(\n        address token,\n        address beneficiary,\n        uint256 target,\n        uint256 deadline\n    ) external {\n        require(token != address(0), \"Invalid token address\");\n        require(beneficiary != address(0), \"Invalid beneficiary\");\n        require(deadline > block.timestamp, \"Deadline must be in the future\");\n\n        Campaign c = new Campaign(IERC20(token), beneficiary, target, deadline);\n        campaigns.push(address(c));\n    }\n\n    function allCampaigns() external view returns (address[] memory) {\n        return campaigns;\n    }\n}"
+    },
+    "contracts/Campaign.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.21;\n\nimport \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ncontract Campaign {\n    IERC20 public token;\n    address public beneficiary;\n    uint256 public target;\n    uint256 public deadline;\n    uint256 public totalDonated;\n\n    mapping(address => uint256) public donations;\n\n    constructor(\n        IERC20 _token,\n        address _beneficiary,\n        uint256 _target,\n        uint256 _deadline\n    ) {\n        require(address(_token) != address(0), \"Invalid token\");\n        require(_beneficiary != address(0), \"Invalid beneficiary\");\n        require(_deadline > block.timestamp, \"Invalid deadline\");\n\n        token = _token;\n        beneficiary = _beneficiary;\n        target = _target;\n        deadline = _deadline;\n    }\n\n    function donate(uint256 amount) external {\n        require(block.timestamp < deadline, \"Campaign ended\");\n        require(amount > 0, \"Amount must be > 0\");\n\n        donations[msg.sender] += amount;\n        totalDonated += amount;\n\n        require(token.transferFrom(msg.sender, address(this), amount), \"Transfer failed\");\n    }\n\n    function release() external {\n        require(block.timestamp >= deadline, \"Campaign not ended\");\n        require(totalDonated >= target, \"Target not met\");\n\n        require(token.transfer(beneficiary, totalDonated), \"Transfer failed\");\n    }\n}"
+    },
+    "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface IERC20 {\n    function totalSupply() external view returns (uint256);\n    function balanceOf(address account) external view returns (uint256);\n    function transfer(address recipient, uint256 amount) external returns (bool);\n    function allowance(address owner, address spender) external view returns (uint256);\n    function approve(address spender, uint256 amount) external returns (bool);\n    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);\n\n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers"
+        ],
+        "": ["ast"]
+      }
+    }
+  }
+}
